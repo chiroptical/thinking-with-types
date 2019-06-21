@@ -170,3 +170,32 @@ exeTwoTo (_, g) (Right y) = g y
 
 exeTwoFrom :: (Either b c -> a) -> (b -> a, c -> a)
 exeTwoFrom f = (f . Left, f . Right)
+
+-- (a x b) ^ c == a ^ c x b ^ c
+-- ---
+-- (a x b) ^ c = c -> (a, b)
+-- a ^ c x b ^ c = (c -> a, c -> b)
+
+exeThreeTo :: (c -> (a, b)) -> (c -> a, c -> b)
+exeThreeTo f = (fst . f, snd . f)
+
+exeThreeFrom :: (c -> a, c -> b) -> (c -> (a, b))
+exeThreeFrom (fa, fb) = \c -> (fa c, fb c)
+
+-- Canonical Representation is ``sum of products''
+-- t = \Sigma_m \Rho_n t_{m,n}
+-- ---
+-- A bit confused here, supposedly clarified in Chapter 13
+-- HELP
+
+data SumOfProduct a = A a | B a 
+
+data ProductOfSum a b =
+  ProductOfSum
+    { _one :: Either a a
+    , _two :: Either b b
+    }
+
+data SumOfProduct' a b =
+   A' { _one' :: Either a a } 
+ | B' { _two' :: Either b b }
