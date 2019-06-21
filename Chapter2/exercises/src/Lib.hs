@@ -81,7 +81,7 @@ type family Not (x :: Bool) :: Bool where
   Not _ = 'True
 
 -- Although this type family is written correctly,
--- it isn't particularly useful because kinds must
+-- it isn't particularly useful because type families must
 -- be fully saturated. i.e.
 -- Map (Or 'True) '[ 'True, 'False]
 -- will fail because Or is partially saturated
