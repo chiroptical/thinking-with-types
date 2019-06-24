@@ -53,14 +53,13 @@ instance Functor T3 where
 instance Invariant T3 where
   invmap = undefined
 
+-- Need to discuss these thoroughly!
+
 instance Contravariant T4 where
-  contramap f (T4 fIaI) = undefined
+  contramap f (T4 fiai) = T4 $ \ib -> fiai $ f . ib
 
 instance Functor T5 where
-  -- f :: a -> b
-  -- faII :: (a -> Int) -> Int
-  -- result :: (b -> Int) -> Int
-  fmap f (T5 faII) = undefined
+  fmap f (T5 faii) = T5 $ \bi -> faii $ bi . f
 
 -- `Either`  and `(,)` are covariate in both of their arguments,
 -- these are called Bifunctors
