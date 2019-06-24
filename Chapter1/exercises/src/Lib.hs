@@ -179,8 +179,10 @@ exeTwoFrom f = (f . Left, f . Right)
 exeThreeTo :: (c -> (a, b)) -> (c -> a, c -> b)
 exeThreeTo f = (fst . f, snd . f)
 
-exeThreeFrom :: (c -> a, c -> b) -> (c -> (a, b))
-exeThreeFrom (fa, fb) = \c -> (fa c, fb c)
+exeThreeFrom :: Applicative f => (f a, f b) -> f (a, b)
+exeThreeFrom (fa, fb) = (,) <$> fa <*> fb
+-- exeThreeFrom :: (c -> a, c -> b) -> (c -> (a, b))
+-- exeThreeFrom (fa, fb) = \c -> (fa c, fb c)
 
 -- Canonical Representation is ``sum of products''
 -- t = \Sigma_m \Rho_n t_{m,n}
