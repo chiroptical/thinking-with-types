@@ -35,10 +35,10 @@ newtype T4 a = T4 ((Int -> a) -> Int)
 newtype T5 a = T5 ((a -> Int) -> Int)
 
 instance Functor T1 where
-  fmap f (T1 fInt) = T1 $ f . fInt
+  fmap f (T1 fia) = T1 $ f . fia
 
 instance Contravariant T2 where
-  contramap f (T2 fa) = T2 $ fa . f
+  contramap f (T2 fai) = T2 $ fai . f
 
 -- QUESTION: How do we make this work?
 -- Trick is, you need a fbb :: (b -> b) from an faa :: (a -> a) and f :: (a -> b)
