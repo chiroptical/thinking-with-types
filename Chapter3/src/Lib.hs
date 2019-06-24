@@ -51,7 +51,7 @@ instance Functor T3 where
 -- invmapFunctor = flip $ const fmap
 
 instance Invariant T3 where
-  invmap fab fba (T3 faa) = T3 $ \b -> fab $ fba b
+  invmap fab fba (T3 faa) = T3 $ \b -> fab . faa . fba $ b
 
 -- Need to discuss these thoroughly!
 
