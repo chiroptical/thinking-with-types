@@ -1,0 +1,3 @@
+# Chapter3
+
+Variance
