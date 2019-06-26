@@ -34,35 +34,36 @@ newtype T4 a = T4 ((Int -> a) -> Int)
 --                 (-)
 newtype T5 a = T5 ((a -> Int) -> Int)
 
+-- A Covariant only has positive occurences and is a valid Invariant
+-- A Contravariant only has negative occurences and is a valid Invariant
+-- A Phantom has neither positive/negative occurences and is a valid Invariant
+-- An Invariant is _only_ Invariant when it contains both positive/negative occurences
+
+-- Important Note: the `invariant` package implements Invariant instances
+-- for data types which are already Functors (Covariant). `T3` is __only__
+-- Invariant and therefore the function (http://hackage.haskell.org/package/invariant-0.5.3/docs/src/Data.Functor.Invariant.html#invmapFunctor)
+-- will not work for T3.
+
 instance Functor T1 where
   fmap f (T1 fia) = T1 $ f . fia
 
 instance Contravariant T2 where
   contramap f (T2 fai) = T2 $ fai . f
 
--- QUESTION: How do we make this work?
--- Trick is, you need a fbb :: (b -> b) from an faa :: (a -> a) and f :: (a -> b)
-instance Functor T3 where
-  fmap f (T3 faa) = undefined
-
--- This comes from the package itself, but only works if you can
--- implement a Functor instance
--- invmapFunctor :: Functor f => (a -> b) -> (b -> a) -> f a -> f b
--- invmapFunctor = flip $ const fmap
-
+-- T3 is the Endomorphism (https://hackage.haskell.org/package/base-4.12.0.0/docs/Data-Monoid.html#t:Endo)
 instance Invariant T3 where
-  invmap fab fba (T3 faa) = T3 $ \b -> fab . faa . fba $ b
-
--- Need to discuss these thoroughly!
+  invmap fab fba (T3 faa) = T3 $ fab . faa . fba
 
 instance Contravariant T4 where
-  contramap f (T4 fiai) = T4 $ \ib -> fiai $ f . ib
+  -- contramap f (T4 fibi) = T4 $ \ib -> fibi $ f . ib
+  contramap f (T4 fiai) = T4 $ fiai . (f .)
 
 instance Functor T5 where
-  fmap f (T5 faii) = T5 $ \bi -> faii $ bi . f
+  -- fmap f (T5 faii) = T5 $ \bi -> faii $ bi . f
+  fmap f (T5 faii) = T5 $ faii . (. f)
 
 -- `Either`  and `(,)` are covariate in both of their arguments,
--- these are called Bifunctors
+-- these are called bifunctors
 
 -- `(->)` is contravariant in its first argument and covariate in its
 -- second, this is known as a profunctor
