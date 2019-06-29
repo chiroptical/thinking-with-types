@@ -20,8 +20,6 @@ data HList (ts :: [Type]) where
   HNil :: HList '[]
   (:#) :: t -> HList ts -> HList (t ': ts)
 
-type BHList = HList '[Bool]
-
 infixr 5 :#
 
 hLength :: HList ts -> Int
@@ -53,12 +51,36 @@ hLast (_ :# ts@(_ :# _)) = hLast ts
 showBool :: HList '[_1, Bool, _2] -> String
 showBool (_ :# b :# _ :# HNil) = show b
 
-instance Eq (HList '[]) where
-  HNil == HNil = True
+-- instance Eq (HList '[]) where
+--   HNil == HNil = True
 
-instance (Eq t, Eq (HList ts)) => Eq (HList (t ': ts)) where
+-- instance (Eq t, Eq (HList ts)) => Eq (HList (t ': ts)) where
+--   (a :# as) == (b :# bs) = a == b && as == bs
+
+instance All Eq ts => Eq (HList ts) where
+  HNil == HNil = True
   (a :# as) == (b :# bs) = a == b && as == bs
 
-f = (True :# 1 :# HNil) == (False :# 2 :# HNil)
--- This is a type error!
--- g = (True :# 1 :# HNil) == (False :# 2 :# 4 :# HNil)
+-- type family AllEq (ts :: [Type]) :: Constraint where
+--   AllEq '[] = ()
+--   AllEq (t ': ts) = (Eq t, AllEq ts)
+
+type family All (c :: Type -> Constraint) (ts :: [Type]) :: Constraint where
+  All c '[] = ()
+  All c (t ': ts) = (c t, All c ts)
+
+instance All Show ts => Show (HList ts) where
+  show HNil = "HNil"
+  show (t :# ts) = show t <> " :# " <> show ts
+  -- Due to the Haskell monomorphism restriction,
+  -- -> one cannot use where (or let) to keep `t` and `ts`
+  -- -> as the same types in the signature
+  -- -> and therefore `go` (below) can't compile
+  -- -> **Need to learn a bit more about this**
+  -- show (t :# ts) = "[" ++ go (t :# ts) ++ "]"
+  --   where
+  --     go (t :# ts) = show t ++ "," ++ go ts
+
+instance (All Eq ts, All Ord ts) => Ord (HList ts) where
+  HNil `compare` HNil = EQ
+  (t :# ts) `compare` (t' :# ts') = t `compare` t' <> ts `compare` ts'
