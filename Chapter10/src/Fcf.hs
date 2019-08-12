@@ -75,3 +75,41 @@ type All (c :: k -> Constraint) (ts :: [k]) = Collapse =<< MapList (Pure1 c) ts
 
 data Pure1 :: (a -> b) -> a -> Exp b
 type instance Eval (Pure1 f x) = f x
+
+data Map :: (a -> Exp b) -> f a -> Exp (f b)
+type instance Eval (Map f '[]) = '[]
+type instance Eval (Map f (a ': as)) = Eval (f a) ': Eval (Map f as)
+
+type instance Eval (Map f 'Nothing) = 'Nothing
+type instance Eval (Map f ('Just x)) = 'Just (Eval (f x))
+
+type instance Eval (Map f ('Left e)) = 'Left e
+type instance Eval (Map f ('Right x)) = 'Right (Eval (f x))
+
+-- 10.4-i, Write a promoted Functor instance for tuples
+type instance Eval (Map f '(x, y)) = '(x, Eval (f x))
+
+data (++) :: [a] -> [a] -> Exp [a]
+type instance Eval ((++) '[] bs) = bs
+type instance Eval ((++) (a ': as') bs) = a ': Eval ((++) as' bs)
+
+data Mappend :: a -> a -> Exp a
+type instance Eval (Mappend '() '()) = '()
+type instance Eval (Mappend (a :: Constraint) (b :: Constraint)) = (a, b)
+type instance Eval (Mappend (a :: [k]) (b :: [k])) = Eval (a ++ b)
+
+-- The (Constraint, Constraint) is actually a logical AND and is a syntactical quirk
+-- Above we can't use '(a, b) because that represents a tuple
+
+-- This is one way to embed Mempty in the type system
+data Mempty :: k -> Exp k
+type instance Eval (Mempty '()) = '()
+type instance Eval (Mempty (k :: Constraint)) = (() :: Constraint)
+type instance Eval (Mempty '[k]) = '[]
+
+-- The below code uses a feature of the compiler to
+-- reduce the amount of boilerplate above
+data Mempty' :: Exp k
+type instance Eval (Mempty' :: Exp ()) = '()
+type instance Eval (Mempty' :: Exp Constraint) = ()
+type instance Eval (Mempty' :: Exp [k]) = '[]
