@@ -1,6 +1,7 @@
 module Main where
 
-import Lib
+import OpenSum
+import OpenProduct
 
 main :: IO ()
 main = putStrLn "Hello"
