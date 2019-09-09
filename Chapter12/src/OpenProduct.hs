@@ -85,27 +85,47 @@ type family FriendlyFindElem
     (funcName :: Symbol)
     (key :: Symbol)
     (ts :: [(Symbol, k)]) where
-  FriendlyFindElem f key ts =
+  FriendlyFindElem funcName key ts =
     Eval (FromMaybe ( TypeError
-                      (     'Text "The key `"
+                      (     'Text "Using the function `"
+                      ':<>: 'Text funcName
+                      ':<>: 'Text "' with key `"
                       ':<>: 'Text key
-                      ':<>: 'Text "' is not present in this OpenProduct."
-                      ':$$: 'Text "Consider using `insert` or `upsert'."
+                      ':<>: 'Text "' is not allowed for this OpenProduct."
+                      ':$$: 'Text "The available keys are `"
+                      ':<>: Eval (FoldrPrettyPrintKeys (Eval (Map Fst ts)))
+                      ':<>: 'Text "'."
                       )
                     ) =<< FindIndex (TyEq key <=< Fst) ts)
 
-findElem :: forall key ts . KnownNat (FindElem key ts) => Int
-findElem = fromIntegral . natVal $ Proxy @(FindElem key ts)
+findElem :: forall f key ts . KnownNat (FriendlyFindElem f key ts) => Int
+findElem = fromIntegral . natVal $ Proxy @(FriendlyFindElem f key ts)
 
 type LookupType (key :: k) (ts :: [(k, t)]) = FromMaybe Stuck =<< Lookup key ts
 
+type family FoldrPrettyPrintKeys
+  (ks :: [k]) where
+    FoldrPrettyPrintKeys ks = Foldr Folder (Text "") ks
+
+data Folder :: a
+  -> b
+  -> Exp ErrorMessage
+
+type instance Eval (Folder a b) = ShowType a ':<>: Text ", " ':<>: b
+
+type family PrettyPrintKeys
+  (ks :: [k]) where
+    PrettyPrintKeys '[] = Text ""
+    PrettyPrintKeys (a ': '[]) = ShowType a
+    PrettyPrintKeys (a ': as) = ShowType a ':<>: Text " " ':<>: PrettyPrintKeys as
+
 get
   :: forall key ts f
-   . KnownNat (FindElem key ts)
+   . KnownNat (FriendlyFindElem "get" key ts)
   => Key key
   -> OpenProduct f ts
   -> f (Eval (LookupType key ts))
-get _ (OpenProduct v) = unAny $ V.unsafeIndex v $ findElem @key @ts
+get _ (OpenProduct v) = unAny $ V.unsafeIndex v $ findElem @"get" @key @ts
   where unAny (Any a) = unsafeCoerce a
 
 type UpdateElem (key :: Symbol) (t :: k) (ts :: [(Symbol, k)])
@@ -113,25 +133,25 @@ type UpdateElem (key :: Symbol) (t :: k) (ts :: [(Symbol, k)])
 
 update
   :: forall key ts t f
-   . KnownNat (FindElem key ts)
+   . KnownNat (FriendlyFindElem "update" key ts)
   => Key key
   -> f t
   -> OpenProduct f ts
   -> OpenProduct f (Eval (UpdateElem key t ts))
 update _ ft (OpenProduct v) =
-  OpenProduct $ v V.// [(findElem @key @ts, Any ft)]
+  OpenProduct $ v V.// [(findElem @"update" @key @ts, Any ft)]
 
 type DeleteElem (key :: Symbol) (t :: k) (ts :: [(Symbol, k)])
   = Filter (TyEq key <=< Fst) ts
 
 delete
   :: forall key ts t f
-   . KnownNat (FindElem key ts)
+   . KnownNat (FriendlyFindElem "delete" key ts)
   => Key key
-  -> f t
+  -- -> f t
   -> OpenProduct f ts
   -> OpenProduct f (Eval (DeleteElem key t ts))
-delete _ ft (OpenProduct v) = OpenProduct $ V.drop (findElem @key @ts) v
+delete _ (OpenProduct v) = OpenProduct $ V.drop (findElem @"delete" @key @ts) v
 
 -- `FindIndex` gives us `Maybe Nat`
 -- Need to fit together `Map` w/ `SetIndex` over `Maybe Nat`
