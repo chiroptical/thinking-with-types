@@ -1,0 +1,39 @@
+library:
+  source-dirs: src
+tests:
+  Chapter13-test:
+    source-dirs: test
+    main: Spec.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - Chapter13
+copyright: 2019 Author name here
+maintainer: example@example.com
+dependencies:
+- mtl
+- text
+- aeson
+- vector
+- base >= 4.7 && < 5
+name: Chapter13
+version: 0.1.0.0
+extra-source-files:
+- README.md
+- ChangeLog.md
+author: Author name here
+github: githubuser/Chapter13
+license: BSD3
+executables:
+  Chapter13-exe:
+    source-dirs: app
+    main: Main.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - Chapter13
+description: Please see the README on GitHub at <https://github.com/githubuser/Chapter13#readme>
