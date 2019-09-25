@@ -22,6 +22,7 @@ import Data.Vector (fromList)
 import GHC.Generics
 import GHC.TypeLits
 import qualified GHC.TypeLits as Err
+import Fcf
 
 data Person =
   Person
@@ -48,6 +49,8 @@ type family ToJsonType (a :: Type) :: Symbol where
   ToJsonType String = "string"
   ToJsonType Bool = "boolean"
   ToJsonType [a] = "array"
+  -- Experimenting with the idea of writing maybe types prefaced with "maybe "
+  --ToJsonType (Maybe a) = AppendSymbol "maybe " (ToJsonType a)
   ToJsonType a = TypeName a
 
 type family RepName (x :: Type -> Type) :: Symbol where
@@ -72,4 +75,63 @@ instance (KnownSymbol nm, KnownSymbol (ToJsonType a)) =>
 
 instance (GSchema f, GSchema g) => GSchema (f :*: g) where
   gschema = mergeObjects <$> gschema @f <*> gschema @g
+  {-# INLINE gschema #-}
+
+instance (TypeError ('Err.Text "Json Schema does not support sum types ...")) => GSchema (f :+: g) where
+  gschema = error "Json Schema does not support sum types"
+  {-# INLINE gschema #-}
+
+instance GSchema a => GSchema (M1 C _1 a) where
+  gschema = gschema @a
+  {-# INLINE gschema #-}
+
+instance (GSchema a, KnownSymbol nm)
+    => GSchema (M1 D ('MetaData nm _1 _2 _3) a) where
+  gschema = do
+    sch <- gschema @a
+    pure $ object
+      [ "title" .= (String . pack . symbolVal $ Proxy @nm)
+      , "type" .= String "object"
+      , "properties" .= sch
+      ]
+  {-# INLINE gschema #-}
+
+schema :: forall a. (GSchema (Rep a), Generic a) => Value
+schema =
+  let (v, reqs) = runWriter $ gschema @(Rep a)
+   in mergeObjects v $ object
+    [ "required" .= Array (fromList $ String <$> reqs)
+    ]
+{-# INLINE schema #-}
+
+instance {-# OVERLAPPING #-}
+  ( KnownSymbol nm
+  , KnownSymbol (ToJsonType a)
+  )
+    => GSchema (M1 S ('MetaSel ('Just nm) _1 _2 _3)
+                     (K1 _4 (Maybe a))) where 
+  gschema = pure . makePropertyObj @nm $ makeTypeObj @a
+  {-# INLINE gschema #-}
+
+instance {-# OVERLAPPING #-}
+  ( KnownSymbol nm
+  , KnownSymbol (ToJsonType [a])
+  , KnownSymbol (ToJsonType a)
+  )
+    => GSchema (M1 S ('MetaSel ('Just nm) _1 _2 _3)
+                     (K1 _4 [a])) where
+  gschema = do
+    emitRequired @nm
+    let innerType = object ["items" .= makeTypeObj @a]
+    pure . makePropertyObj @nm . mergeObjects innerType $ makeTypeObj @[a]
+  {-# INLINE gschema #-}
+
+instance {-# OVERLAPPING #-}
+  ( KnownSymbol nm
+  )
+    => GSchema (M1 S ('MetaSel ('Just nm) _1 _2 _3)
+                     (K1 _4 String)) where
+  gschema = do
+    emitRequired @nm
+    pure . makePropertyObj @nm $ makeTypeObj @String
   {-# INLINE gschema #-}

@@ -10,9 +10,12 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - Chapter13
+    - inspection-testing
 copyright: 2019 Author name here
 maintainer: example@example.com
 dependencies:
+- kan-extensions
+- first-class-families
 - mtl
 - text
 - aeson
