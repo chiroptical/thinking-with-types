@@ -52,5 +52,27 @@ newtype Handle s key =
     { unsafeGetHandle :: SIO.Handle
     }
 
+type IsOpen (key :: k) (ts :: [k]) =
+  IsJust =<< Find (TyEq key) ts
+
+type Close (key :: k) (ts :: [k]) =
+  Filter (Not <=< TyEq key) ts
+
+closeFile
+  :: Eval (IsOpen key open) ~ 'True
+  => Handle s key
+  -> Linear s ('LinearState next open)
+              ('LinearState next (Eval (Close key open)))
+              ()
+closeFile = coerce SIO.hClose
+
+runLinear
+  :: ( forall s
+     . Linear s ('LinearState 0 '[])
+                ('LinearState n '[]) a
+     )
+  -> IO a
+runLinear = coerce
+
 main :: IO ()
 main = putStrLn "Indexed Monads"
