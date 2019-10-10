@@ -24,6 +24,7 @@ dependencies:
 - transformers
 - constraints
 - singletons
+- aeson
 
 library:
   source-dirs: src
