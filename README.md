@@ -1,5 +1,7 @@
 # thinking-with-types
 
+[![Chiroptical](https://img.shields.io/badge/twitch.tv-chiroptical-purple?logo=twitch&style=for-the-badge)](https://twitch.tv/chiroptical)
+
 Working through the Thinking with Types book by Sandy Maguire. The book can be
 purchased at https://leanpub.com/thinking-with-types (e-book) or
 http://www.lulu.com/shop/sandy-maguire/thinking-with-types/hardcover/product-23922949.html
